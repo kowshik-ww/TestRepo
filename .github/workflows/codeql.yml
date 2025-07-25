@@ -1,20 +1,19 @@
 # .github/workflows/codeql.yml
-name: CodeQL – Python Autobuild Scan
+name: CodeQL Python Autobuild
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
   schedule:
-    - cron: '0 2 * * 0'     # every Sunday at 02:00 UTC
+    - cron: '0 2 * * 0'   # weekly at 02:00 UTC
 
 jobs:
-  analyze:
-    name: Analyze (Python)
+  codeql:
+    name: Analyze Python
     runs-on: ubuntu-latest
+
     permissions:
       security-events: write
       contents: read
@@ -23,8 +22,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version:
-          - '3.x'
+        python-version: [ '3.x' ]
 
     steps:
       - name: Checkout repository (full history)
@@ -32,15 +30,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Debug: List all files
+      - name: List Python files
         run: |
-          echo "Working directory: $(pwd)"
-          echo "All files recursively:"
-          ls -R .
-          echo "Python sources:"
-          find . -type f -name '*.py' || echo "  ⚠️ no .py files found"
+          echo "Python source files in repo:"
+          find . -type f -name '*.py'
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
@@ -53,17 +48,17 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip setuptools wheel
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
 
-      - name: Install your package
-        run: |
-          # build & install from source (non-editable)
-          pip install .
+      - name: Install package
+        run: pip install .
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v3
 
-      - name: Perform CodeQL analysis
+      - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
           category: "/language:python"
