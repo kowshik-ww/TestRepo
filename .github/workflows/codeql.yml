@@ -1,11 +1,10 @@
-# .github/workflows/codeql.yml
 name: "CodeQL – Python Autobuild Scan"
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
   schedule:
     - cron: '0 2 * * 0'        # weekly on Sunday at 02:00 UTC
 
@@ -21,12 +20,20 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ['3.x']
+        python-version: [ '3.x' ]
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Debug: List all files
+        run: |
+          echo "Working directory: $(pwd)"
+          echo "All files (recursive):"
+          ls -R .
+          echo "Python files found:"
+          find . -type f -name "*.py"
+      
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
@@ -36,11 +43,17 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: python
+        # Optional: increase extractor verbosity
+        # env:
+        #   CODEQL_PYTHON_EXTRACTOR_OPTS: --verbose
 
       - name: Install project and dependencies
         run: |
           pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+          # Install your package in editable mode so CodeQL sees its modules
           pip install -e .
 
       - name: Autobuild
