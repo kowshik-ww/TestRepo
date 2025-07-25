@@ -1,3 +1,4 @@
+# .github/workflows/codeql.yml
 name: "CodeQL – Python Autobuild Scan"
 
 on:
@@ -23,17 +24,16 @@ jobs:
         python-version: [ '3.x' ]
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repository (full history)
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0               # fetch all commits & tags for setuptools_scm
 
-      - name: Debug: List all files
+      - name: Debug: List Python sources
         run: |
-          echo "Working directory: $(pwd)"
-          echo "All files (recursive):"
-          ls -R .
-          echo "Python files found:"
-          find . -type f -name "*.py"
-      
+          echo "Looking for .py files…"
+          find . -type f -name '*.py' || echo "  ⚠️ none found"
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
@@ -43,18 +43,21 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: python
-        # Optional: increase extractor verbosity
+        # Optional: see verbose extractor output
         # env:
         #   CODEQL_PYTHON_EXTRACTOR_OPTS: --verbose
 
-      - name: Install project and dependencies
+      - name: Install dependencies
         run: |
-          pip install --upgrade pip
+          pip install --upgrade pip setuptools wheel
           if [ -f requirements.txt ]; then
             pip install -r requirements.txt
           fi
-          # Install your package in editable mode so CodeQL sees its modules
-          pip install -e .
+
+      - name: Install your package (non-editable)
+        run: |
+          # build & install a wheel rather than using -e .
+          pip install .
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v3
